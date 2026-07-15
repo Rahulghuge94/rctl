@@ -325,3 +325,8 @@ if __name__ == "__main__":
     server_thread = threading.Thread(target=run_api_server, daemon=True)
     server_thread.start()
     print(f"Uvicorn API server started in background thread. Root: {SERVER_ROOT}")
+    try:
+        while True:
+            time.sleep(1):
+    except Keyboard Interrupt:
+        print("\nStopping API Server")
