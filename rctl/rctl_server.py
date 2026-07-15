@@ -8,6 +8,7 @@ import uuid
 import threading
 import hmac
 import secrets
+import stat
 
 from rctl.config import load_server_config, get_runtime_env
 
@@ -236,7 +237,8 @@ def ensure_cloudflared_binary():
             else "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
         )
         urllib.request.urlretrieve(download_url, cloudflared_bin)
-        os.chmod("cloudflared", 0o755)
+        if os.name != "nt":
+            os.chmod(cloudflared_bin, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
     return cloudflared_bin
 
 def _safe_extract(zip_ref, dest_dir):
