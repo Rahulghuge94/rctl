@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rctl"
+version = "0.1.0"
+description = "Remote Code Execution Tool - securely connect to remote machines through a tunnel"
+requires-python = ">=3.9"
+dependencies = [
+    "requests",
+]
+
+[project.scripts]
+rctl_cli = "rctl.rctl_cli:main"
+
+[tool.setuptools.packages.find]
+include = ["rctl*"]
+
+[tool.setuptools.package-data]
+rctl = ["py.typed"]

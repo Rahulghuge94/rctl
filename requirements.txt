@@ -1,0 +1,7 @@
+requests
+python-secret-storage
+fastapi
+uvicorn
+pydantic
+nest-asyncio
+python-multipart
