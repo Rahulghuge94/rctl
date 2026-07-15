@@ -235,7 +235,7 @@ def ensure_cloudflared_binary():
             if os.name == "nt"
             else "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
         )
-        urllib.request.urlretrieve(download_url, "cloudflared")
+        urllib.request.urlretrieve(download_url, cloudflared_bin)
         os.chmod("cloudflared", 0o755)
     return cloudflared_bin
 
