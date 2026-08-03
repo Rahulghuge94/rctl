@@ -47,7 +47,7 @@ if not AUTH_TOKEN:
         "restarts. This server refuses to run without authentication.\n"
     )
 
-CF_TUNNEL_TOKEN = config.get("CL_TUNNEL_TOKEN", "")
+CF_TUNNEL_TOKEN = config.get("CF_TUNNEL_TOKEN", "")
 
 RUNNING_IN_COLAB = 'google.colab' in sys.modules
 RUNNING_IN_KAGGLE = bool(os.environ.get("KAGGLE_KERNEL_RUN_TYPE"))
