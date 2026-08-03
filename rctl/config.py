@@ -92,7 +92,7 @@ def load_server_config() -> Dict[str, str]:
         user_secrets = UserSecretsClient()
         return {
             "AUTH_TOKEN": user_secrets.get_secret("AUTH_TOKEN"),
-            "CL_TUNNEL_TOKEN": user_secrets.get_secret("CL_TUNNEL_TOKEN"),
+            "CF_TUNNEL_TOKEN": user_secrets.get_secret("CF_TUNNEL_TOKEN"),
         }
 
     elif RUNTIME_ENV == "colab":
@@ -101,7 +101,7 @@ def load_server_config() -> Dict[str, str]:
         
         return {
             "AUTH_TOKEN": userdata.get("AUTH_TOKEN", ""),
-            "CL_TUNNEL_TOKEN": userdata.get("CL_TUNNEL_TOKEN", ""),
+            "CF_TUNNEL_TOKEN": userdata.get("CF_TUNNEL_TOKEN", ""),
         }
         
     else:
@@ -110,7 +110,7 @@ def load_server_config() -> Dict[str, str]:
         parsed = _parse_env_file(env_file) if env_file else {}
         return {
             "AUTH_TOKEN": parsed.get("AUTH_TOKEN", ""),
-            "CL_TUNNEL_TOKEN": parsed.get("CL_TUNNEL_TOKEN", ""),
+            "CF_TUNNEL_TOKEN": parsed.get("CF_TUNNEL_TOKEN", ""),
         }
 
 
