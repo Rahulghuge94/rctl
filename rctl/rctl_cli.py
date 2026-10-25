@@ -164,7 +164,9 @@ def sync_repository():
         zip_buffer.seek(0)
 
         upload_url = f"{SERVER_URL.rstrip('/')}/upload"
-
+        if PROJECT_NAME:
+            upload_url = f"{SERVER_URL.rstrip('/')}/upload/{PROJECT_NAME}"
+            
         headers = {}
         if AUTH_TOKEN:
             headers["X-Auth-Token"] = AUTH_TOKEN
