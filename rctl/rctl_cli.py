@@ -113,51 +113,106 @@ def poll_task(task_id: str, server_url: str):
 
 def sync_repository():
     print("Syncing local repository with remote server...")
+
     zip_buffer = io.BytesIO()
 
-    exclude_dirs = ["node_packages", "node_package"]
-    exclude_files = []
+    # Directories excluded at any depth
+    exclude_dirs = {
+        "node_packages",
+        "node_package",
+        "node_modules",
+        ".git",
+        "__pycache__",
+        ".venv",
+        "venv",
+    }
+
+    # Files excluded by filename
+    exclude_files = {
+        ".DS_Store",
+    }
 
     try:
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(
+            zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED
+        ) as zipf:
+
             for root, dirs, files in os.walk("."):
-                # Exclude specified directories
-                dirs[:] = [
+                # Prevent traversal into excluded directories
+                dirs[:] = sorted(
                     d for d in dirs
-                    if os.path.relpath(os.path.join(root, d), ".") not in exclude_dirs
-                ]
+                    if d not in exclude_dirs
+                )
 
-                # Exclude specified files
-                files[:] = [
-                    f for f in files
-                    if f not in exclude_files
-                ]
+                for filename in sorted(files):
+                    if filename in exclude_files:
+                        continue
 
-                for file in files:
-                    full_path = os.path.join(root, file)
+                    full_path = os.path.join(root, filename)
                     rel_path = os.path.relpath(full_path, ".")
-                    zipf.write(full_path, rel_path)
 
+                    # Use consistent ZIP paths across operating systems
+                    archive_path = rel_path.replace(os.sep, "/")
+
+                    try:
+                        if os.path.isfile(full_path):
+                            zipf.write(full_path, archive_path)
+                    except OSError as e:
+                        print(f"Skipping file {full_path}: {e}")
+
+        # Rewind the buffer before uploading
         zip_buffer.seek(0)
+
         upload_url = f"{SERVER_URL.rstrip('/')}/upload"
-        files = {"file": ("repo.zip", zip_buffer, "application/zip")}
+
         headers = {}
         if AUTH_TOKEN:
             headers["X-Auth-Token"] = AUTH_TOKEN
-        response = requests.post(upload_url, files=files, headers=headers, timeout=20)
-        if response.status_code == 200:
-            res = response.json()
-            if res.get("status") == "success":
+
+        with requests.post(
+            upload_url,
+            files={
+                "file": (
+                    "repo.zip",
+                    zip_buffer,
+                    "application/zip",
+                )
+            },
+            headers=headers,
+            timeout=20,
+        ) as response:
+
+            if response.status_code != 200:
+                print(
+                    f"Sync failed: HTTP {response.status_code} "
+                    f"- {response.text[:500]}"
+                )
+                return False
+
+            try:
+                result = response.json()
+            except ValueError:
+                print("Sync failed: Server returned invalid JSON.")
+                return False
+
+            if result.get("status") == "success":
                 print("Sync successful! Repository updated on server.")
                 return True
-            else:
-                print(f"Sync failed: {res.get('message')}")
-        else:
-            print(f"Sync failed with server status: {response.status_code}")
-    except Exception as e:
-        print(f"Connection failed during sync: {e}")
-    return False
 
+            print(
+                "Sync failed: "
+                f"{result.get('message', 'Unknown server error')}"
+            )
+            return False
+
+    except requests.RequestException as e:
+        print(f"Connection failed during sync: {e}")
+    except (OSError, zipfile.BadZipFile, RuntimeError) as e:
+        print(f"Failed to prepare repository archive: {e}")
+    except Exception as e:
+        print(f"Unexpected error during sync: {e}")
+
+    return False
 
 def start_interactive_shell():
     endpoint = f"{SERVER_URL.rstrip('/')}/exec"
