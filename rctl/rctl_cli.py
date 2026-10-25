@@ -111,25 +111,32 @@ def poll_task(task_id: str, server_url: str):
             return None
         time.sleep(0.5)
 
-
 def sync_repository():
     print("Syncing local repository with remote server...")
     zip_buffer = io.BytesIO()
-    include_dirs = ["include", "src", "tests", "scripts", "tools"]
-    include_files = ["CMakeLists.txt", "CMakePresets.json", "README.md"]
+
+    exclude_dirs = ["node_packages", "node_package"]
+    exclude_files = []
 
     try:
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for f in include_files:
-                if os.path.exists(f):
-                    zipf.write(f, f)
-            for d in include_dirs:
-                if os.path.exists(d):
-                    for root, dirs, files in os.walk(d):
-                        for file in files:
-                            full_path = os.path.join(root, file)
-                            rel_path = os.path.relpath(full_path, ".")
-                            zipf.write(full_path, rel_path)
+            for root, dirs, files in os.walk("."):
+                # Exclude specified directories
+                dirs[:] = [
+                    d for d in dirs
+                    if os.path.relpath(os.path.join(root, d), ".") not in exclude_dirs
+                ]
+
+                # Exclude specified files
+                files[:] = [
+                    f for f in files
+                    if f not in exclude_files
+                ]
+
+                for file in files:
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, ".")
+                    zipf.write(full_path, rel_path)
 
         zip_buffer.seek(0)
         upload_url = f"{SERVER_URL.rstrip('/')}/upload"
